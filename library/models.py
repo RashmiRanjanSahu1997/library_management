@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 class User(AbstractUser):
     username = None
@@ -59,6 +60,32 @@ class BorrowRequest(models.Model):
 
     class Meta:
         ordering = ['-requested_at']
+
+    def approve(self):
+        if self.status != self.PENDING:
+            raise ValidationError("Only pending requests can be approved.")
+
+        if self.book.available_copies <= 0:
+            raise ValidationError("No copies available to approve this request.")
+
+        self.status = self.APPROVED
+        self.approved_at = timezone.now()
+        self.save()
+
+    def reject(self):
+        if self.status != self.PENDING:
+            raise ValidationError("Only pending requests can be rejected.")
+
+        self.status = self.REJECTED
+        self.save()
+
+    def mark_returned(self):
+        if self.status != self.APPROVED:
+            raise ValidationError("Only approved requests can be returned.")
+
+        self.status = self.RETURNED
+        self.returned_at = timezone.now()
+        self.save()
 
 class BookReview(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')

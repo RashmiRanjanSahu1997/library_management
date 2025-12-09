@@ -164,7 +164,7 @@ class BorrowRequestViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'], permission_classes=(IsAuthenticated,))
     def return_book(self, request, pk=None):
         br = get_object_or_404(BorrowRequest, pk=pk)
-        if request.user != br.user and not request.user.is_librarian:
+        if request.user != br.user and not request.user.is_librarian():
             return Response({'detail': 'Not allowed'}, status=status.HTTP_403_FORBIDDEN)
         try:
             br.mark_returned()
